@@ -1,0 +1,12 @@
+﻿@model ConfigurationModel
+
+@if (Model.Children != null && Model.Children.Any())
+{
+    <ul>
+        @foreach (var childItem in Model.Children)
+        {
+            <li>@childItem.Key: @childItem.Value</li>
+            @await Html.PartialAsync("_RenderChildren", childItem)
+        }
+    </ul>
+}

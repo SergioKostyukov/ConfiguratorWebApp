@@ -1,0 +1,35 @@
+﻿@model ConfigurationModel
+
+<h1>Configuration Tree</h1>
+
+<ul>
+    @foreach (var item in Model.Children)
+    {
+        <li>@item.Key: @item.Value</li>
+        @await Html.PartialAsync("_RenderChildren", item)
+    }
+</ul>
+
+@{
+    async Task RenderChildren(ConfigurationModel model)
+    {
+        if (model.Children != null && model.Children.Any())
+        {
+            <ul>
+                @foreach (var childItem in model.Children)
+                {
+                    <li>@childItem.Key: @childItem.Value</li>
+                    @await Html.PartialAsync("_RenderChildren", childItem)
+                }
+            </ul>
+        }
+    }
+}
+
+@section Scripts {
+    <script>
+        // JavaScript код для відображення дерева конфігурації в консолі браузера (необов'язково)
+        var configuration = @Html.Raw(Json.Serialize(Model));
+        console.log("Configuration Tree:", configuration);
+    </script>
+}

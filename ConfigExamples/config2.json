@@ -1,0 +1,49 @@
+{
+  "Key": "root",
+  "Value": "root_value",
+  "Children": [
+    {
+      "Key": "keyA",
+      "Value": null,
+      "Children": [
+        {
+          "Key": "keyB",
+          "Value": null,
+          "Children": [
+            {
+              "Key": "keyC",
+              "Value": "value1",
+              "Children": []
+            },
+            {
+              "Key": "keyD",
+              "Value": "value2",
+              "Children": []
+            }
+          ]
+        },
+        {
+          "Key": "keyD",
+          "Value": "value5",
+          "Children": []
+        }
+      ]
+    },
+    {
+      "Key": "keyE",
+      "Value": "value3",
+      "Children": []
+    },
+    {
+      "Key": "keyC",
+      "Value": null,
+      "Children": [
+        {
+          "Key": "keyD",
+          "Value": "value4",
+          "Children": []
+        }
+      ]
+    }
+  ]
+}

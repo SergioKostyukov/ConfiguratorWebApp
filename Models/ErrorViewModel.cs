@@ -1,4 +1,4 @@
-namespace Test_GFL.Models
+namespace ConfiguratorWebApp.Models
 {
     public class ErrorViewModel
     {
