@@ -1,16 +1,10 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using ConfiguratorWebApp.Models.Entites;
+using ConfiguratorWebApp.Models.Entities;
 
 namespace ConfiguratorWebApp.Data
 {
-    public class ApplicationDbContext : DbContext
+    public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options) : DbContext(options)
     {
         public DbSet<Configuration> Configurations { get; set; }
-
-        public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options) : base(options)
-        {
-
-        }
-
     }
 }

@@ -1,19 +1,12 @@
 ﻿using ConfiguratorWebApp.Data;
-using ConfiguratorWebApp.Models.Entites;
-using Microsoft.AspNetCore.Hosting;
-using Microsoft.EntityFrameworkCore;
 using ConfiguratorWebApp.Services;
+using Microsoft.EntityFrameworkCore;
 
 namespace ConfiguratorWebApp;
 
-public class Startup
+public class Startup(IConfiguration configuration)
 {
-    private readonly IConfiguration _configuration;
-
-    public Startup(IConfiguration configuration)
-    {
-        _configuration = configuration;
-    }
+    private readonly IConfiguration _configuration = configuration;
 
     // Method to add services to the container.
     public void ConfigureServices(IServiceCollection services)
@@ -23,7 +16,7 @@ public class Startup
         services.AddScoped<ConfigurationService>();
 
         services.AddDbContext<ApplicationDbContext>(options =>
-        options.UseSqlServer(_configuration.GetConnectionString("ConfigurationApp")));
+            options.UseSqlServer(_configuration.GetConnectionString("ConfigurationApp")));
     }
 
     // Method to configure the HTTP request pipeline.

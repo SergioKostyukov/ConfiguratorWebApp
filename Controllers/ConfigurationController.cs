@@ -1,22 +1,15 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using ConfiguratorWebApp.Services;
-using ConfiguratorWebApp.Models;
+﻿using ConfiguratorWebApp.Services;
+using Microsoft.AspNetCore.Mvc;
 
 namespace ConfiguratorWebApp.Controllers;
 
-public class ConfigurationController : Controller
+public class ConfigurationController(ConfigurationService configService) : Controller
 {
-    private readonly ConfigurationService _configManager;
-
-    public ConfigurationController(ConfigurationService configManager)
-    {
-        _configManager = configManager;
-    }
+    private readonly ConfigurationService _configService = configService;
 
     public IActionResult GetConfigurationTree()
     {
-        var filePath = "./ConfigExamples/config2.json";
-        var configuration = _configManager.LoadConfigurationFromJson(filePath);
+        var configuration = _configService.LoadConfigurationFromJson();
 
         return View(configuration);
     }
