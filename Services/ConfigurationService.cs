@@ -10,11 +10,16 @@ public class ConfigurationService(ApplicationDbContext dbContext)
     private static readonly string configFilePath = "./ConfigExamples/config1.json";
 
     // Method to load configuration from JSON file
-    public List<Configuration> LoadConfigurationFromJson()
+    public void LoadConfigurationFromJson()
     {
         var json = File.ReadAllText(configFilePath);
         var configuration = ParseJsonRecursive(json, null);
         SaveConfiguration(configuration);
+    }
+
+    public List<Configuration> GetConfiguration()
+    {
+        var configuration = _dbContext.Configurations.ToList();
 
         return configuration;
     }

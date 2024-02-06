@@ -1,1 +1,42 @@
-﻿
+﻿@model List<ConfiguratorWebApp.Models.Entities.Configuration>
+
+<ul>
+    @foreach (var item in Model.Where(i => i.ParentId == null))
+    {
+        <li>
+            @item.Key: @item.Value
+            @if (HasChildren(item.Id))
+            {
+                @Html.Raw(RenderChildren(item.Id))
+            }
+        </li>
+    }
+</ul>
+
+@functions
+{
+    string RenderChildren(Guid? parentId)
+    {
+        var children = Model.Where(i => i.ParentId == parentId);
+        if (!children.Any())
+        {
+            return "";
+        }
+
+        var result = "<ul>";
+        foreach (var child in children)
+        {
+            result += $"<li>{child.Key}: {child.Value}";
+            result += RenderChildren(child.Id);
+            result += "</li>";
+        }
+        result += "</ul>";
+
+        return result;
+    }
+
+    bool HasChildren(Guid? parentId)
+    {
+        return Model.Any(i => i.ParentId == parentId);
+    }
+}

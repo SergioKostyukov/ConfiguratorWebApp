@@ -1,5 +1,6 @@
 ﻿using ConfiguratorWebApp.Services;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 namespace ConfiguratorWebApp.Controllers;
 
@@ -9,7 +10,9 @@ public class ConfigurationController(ConfigurationService configService) : Contr
 
     public IActionResult GetConfigurationTree()
     {
-        var configuration = _configService.LoadConfigurationFromJson();
+        _configService.LoadConfigurationFromJson();
+
+        var configuration = _configService.GetConfiguration();
 
         return View(configuration);
     }
