@@ -43,7 +43,7 @@ public class Startup(IConfiguration configuration)
         {
             endpoints.MapControllerRoute(
                 name: "configuration",
-                pattern: "",
+                pattern: "{*path}",
                 defaults: new { controller = "Configuration", action = "GetConfigurationTree" });
         });
     }
