@@ -11,7 +11,6 @@ public class Program
         Host.CreateDefaultBuilder(args)
             .ConfigureWebHostDefaults(webBuilder =>
             {
-                // Use the Startup class to configure the web host
                 webBuilder.UseStartup<Startup>();
             });
 }

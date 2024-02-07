@@ -1,0 +1,14 @@
+{
+  "keyA": {
+    "keyB": {
+      "keyC": {
+        "keyB": {
+          "keyD": {
+            "keyC": "value1",
+            "keyD": "value2"
+          }
+        }
+      }
+    }
+  }
+}

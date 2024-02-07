@@ -1,6 +1,8 @@
-﻿using ConfiguratorWebApp.Data;
+﻿using System.IO;
+using System.Xml.Linq;
+using ConfiguratorWebApp.Data;
 using ConfiguratorWebApp.Models.Entities;
-using Microsoft.EntityFrameworkCore.Metadata.Internal;
+using Microsoft.Extensions.Configuration;
 using Newtonsoft.Json;
 
 namespace ConfiguratorWebApp.Services;
@@ -8,59 +10,118 @@ namespace ConfiguratorWebApp.Services;
 public class ConfigurationService(ApplicationDbContext dbContext)
 {
     private readonly ApplicationDbContext _dbContext = dbContext;
-    private static readonly string configJsonFilePath = "./ConfigExamples/config1.json";
-    private static readonly string configTxtFilePath = "./ConfigExamples/config3.txt";
 
-    // Method to load configuration from JSON file
-    public void LoadConfigurationFromJson()
+    public void LoadConfiguration(string filePath)
     {
-        LogLine(clean: true);
+        try
+        {
+            var extension = Path.GetExtension(filePath);
+            if (extension.Equals(".json", StringComparison.OrdinalIgnoreCase))
+            {
+                LoadConfigurationFromJson(filePath);
+            }
+            else if (extension.Equals(".txt", StringComparison.OrdinalIgnoreCase))
+            {
+                LoadConfigurationFromTxt(filePath);
+            }
+            else
+            {
+                throw new ArgumentException("Unsupported file extension");
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error loading configuration: {ex.Message}");
+            throw;
+        }
+    }
+    // Method to load configuration from JSON file
+    private void LoadConfigurationFromJson(string filePath)
+    {
+        try
+        {
+            LogLine(clean: true);
 
-        var json = File.ReadAllText(configJsonFilePath);
+            var json = File.ReadAllText(filePath);
+            if (json.Length == 0)
+            {
+                throw new Exception("Error format: empty JSON configuration file");
+            }
 
-        var configuration = ParseJsonRecursive(json, null);
+            var configuration = ParseJsonRecursive(json, null);
 
-        SaveConfiguration(configuration);
+            SaveConfiguration(configuration);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error loading JSON configuration: {ex.Message}");
+            throw;
+        }
     }
 
     // Method to load configuration from TXT file
-    public void LoadConfigurationFromTxt()
+    private void LoadConfigurationFromTxt(string filePath)
     {
-        LogLine(clean: true);
+        try
+        {
+            LogLine(clean: true);
 
-        var lines = File.ReadAllLines(configTxtFilePath);
+            var lines = File.ReadAllLines(filePath);
+            if (lines.Length == 0)
+            {
+                throw new Exception("Error format: empty TXT configuration file");
+            }
 
-        var configuration = ParseTxt(lines);
+            var configuration = ParseTxt(lines);
 
-        SaveConfiguration(configuration);
+            SaveConfiguration(configuration);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error loading TXT configuration: {ex.Message}");
+            throw;
+        }
     }
 
     // Method to get configurations from the database
     public List<Configuration> GetConfiguration(string path)
     {
-        // If the path is empty or null, we return the entire configuration
-        if (string.IsNullOrEmpty(path))
+        try
         {
-            return [.. _dbContext.Configurations];
+            // If the path is empty or null, we return the entire configuration
+            if (string.IsNullOrEmpty(path))
+            {
+                return [.. _dbContext.Configurations];
+            }
+
+            // Find the new root element
+            Guid? parentId = null;
+
+            var segments = path.Split('/');
+            foreach (var segment in segments)
+            {
+                parentId = FindConfigurationPartRoot(segment, parentId);
+
+                // Check if a branch was found for the current path
+                if (parentId == null)
+                {
+                    throw new ArgumentException($"Branch '{segment}' in '{path}' not found in the configuration tree.");
+                }
+            }
+
+            // Find part of tree
+            List<Configuration> configurations = [];
+
+            FindConfigurationPartRecursive(configurations, parentId);
+
+            return configurations;
         }
-
-        // Find the new root element
-        Guid? parentId = null;
-
-        var segments = path.Split('/');
-        foreach (var segment in segments)
+        catch (Exception ex)
         {
-            parentId = FindConfigurationPartRoot(segment, parentId);
+            Console.WriteLine($"Error getting configuration: {ex.Message}");
+            throw;
         }
-
-        // Find part of tree
-        List<Configuration> configurations = [];
-
-        FindConfigurationPartRecursive(configurations, parentId);
-
-        return configurations;
     }
-
 
     /* ------------------------- GetConfiduraton methods ------------------------- */
     // Find element root id by path value
@@ -79,32 +140,37 @@ public class ConfigurationService(ApplicationDbContext dbContext)
         .Where(c => c.ParentId == parentId)
         .ToList();
 
-        // Checking if it`s a leaf element
-        if (root.Count == 0)
+        // Refer to the leaf element
+        if (isFirstCall && root.Count == 0)
         {
             var element = _dbContext.Configurations.FirstOrDefault(conf => conf.Id == parentId);
             if (element != null)
             {
-                LogLine($"Final element\n{element.Id}, {element.ParentId}, {element.Key}, {element.Value}");
                 element.ParentId = null;
+                element.Key = "";
                 configurations.Add(element);
+                LogLine($"Key: {element.Key}, Value: {element.Value}");
             }
 
             return;
         }
 
-        // If it`s a branch element
+        // Refer to the branch element
         foreach (var conf in root)
         {
-            LogLine($"{conf.Id}, {conf.ParentId}, {conf.Key}, {conf.Value}");
-
             if (isFirstCall)
             {
                 conf.ParentId = null;
             }
-            configurations.Add(conf);
 
-            FindConfigurationPartRecursive(configurations, conf.Id, false);
+            configurations.Add(conf);
+            LogLine($"Key: {conf.Key}, ParentId: {conf.ParentId}");
+
+            // If it`s a branch element
+            if (conf.Value == null)
+            {
+                FindConfigurationPartRecursive(configurations, conf.Id, false);
+            }
         }
     }
 
@@ -117,12 +183,23 @@ public class ConfigurationService(ApplicationDbContext dbContext)
 
         foreach (var property in jsonObject)
         {
+            if (property.Name == "")
+            {
+                throw new Exception("Empty branch name");
+            }
+
+            string value = property.Value is Newtonsoft.Json.Linq.JObject ? null : property.Value.ToString();
+            if (value == "")
+            {
+                throw new Exception("Empty leaf value");
+            }
+
             var item = new Configuration
             {
                 Id = Guid.NewGuid(),
                 ParentId = parentId,
                 Key = property.Name,
-                Value = property.Value is Newtonsoft.Json.Linq.JObject ? null : property.Value.ToString()
+                Value = value
             };
 
             Configurations.Add(item); // Add configuration item
@@ -148,7 +225,7 @@ public class ConfigurationService(ApplicationDbContext dbContext)
             var parts = line.Split(':');
             if (parts.Length < 2)
             {
-                continue;
+                throw new Exception($"Error format: not enough parameters in line: {line}");
             }
             else
             {
@@ -162,8 +239,18 @@ public class ConfigurationService(ApplicationDbContext dbContext)
     // Parse configuration line from TXT file
     private static void ParseTxtLineRecursive(List<Configuration> configurations, string[] parts, Guid? parentId)
     {
+        if (string.IsNullOrEmpty(parts[0]))
+        {
+            throw new Exception($"Error format: empty branch value");
+        }
+
         if (parts.Length == 2)
         {
+            if (string.IsNullOrEmpty(parts[1]))
+            {
+                throw new Exception($"Error format: empty {parts[0]} leaf value");
+            }
+
             var item = new Configuration
             {
                 Id = Guid.NewGuid(),

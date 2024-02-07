@@ -3,22 +3,29 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace ConfiguratorWebApp.Controllers;
 
-public class ConfigurationController(ConfigurationService configService) : Controller
+public class ConfigurationController(ConfigurationService configService, IConfiguration configuration) : Controller
 {
     private readonly ConfigurationService _configService = configService;
+    private readonly string _configFilePath = configuration["ConfigurationFilePath"];
 
     public IActionResult GetConfigurationTree(string path)
     {
-        _configService.LoadConfigurationFromJson();
-        //_configService.LoadConfigurationFromTxt();
-
-        var configuration = _configService.GetConfiguration(path);
-
-        if (configuration == null)
+        try
         {
-            return NotFound();
-        }
+            _configService.LoadConfiguration(_configFilePath);
 
-        return View(configuration);
+            var configuration = _configService.GetConfiguration(path);
+
+            if (configuration == null)
+            {
+                return NotFound();
+            }
+
+            return View(configuration);
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, $"An error occurred while processing request: {ex.Message}");
+        }
     }
 }
