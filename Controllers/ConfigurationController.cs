@@ -11,6 +11,7 @@ public class ConfigurationController(ConfigurationService configService) : Contr
     public IActionResult GetConfigurationTree()
     {
         _configService.LoadConfigurationFromJson();
+        //_configService.LoadConfigurationFromTxt();
 
         var configuration = _configService.GetConfiguration();
 
