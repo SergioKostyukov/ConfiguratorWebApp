@@ -7,14 +7,17 @@ public class ConfigurationController(ConfigurationService configService, IConfig
 {
     private readonly ConfigurationService _configService = configService;
     private readonly string _configFilePath = configuration["ConfigurationFilePath"];
+    private readonly string _outputFilePath = "./Data/output.json";
 
-    public IActionResult GetConfigurationTree(string path)
+	public IActionResult GetConfigurationTree(string path)
     {
         try
         {
             _configService.LoadConfiguration(_configFilePath);
 
             var configuration = _configService.GetConfiguration(path);
+
+            _configService.LoadConfigurationToFile(_outputFilePath);
 
             if (configuration == null)
             {

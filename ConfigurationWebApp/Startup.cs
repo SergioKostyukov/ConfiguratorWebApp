@@ -8,10 +8,8 @@ public class Startup(IConfiguration configuration)
 {
     private readonly IConfiguration _configuration = configuration;
 
-    // Method to add services to the container.
     public void ConfigureServices(IServiceCollection services)
     {
-        // Add services to the container.
         services.AddControllersWithViews();
         services.AddScoped<ConfigurationService>();
 
@@ -19,7 +17,6 @@ public class Startup(IConfiguration configuration)
             options.UseSqlServer(_configuration.GetConnectionString("ConfigurationApp")));
     }
 
-    // Method to configure the HTTP request pipeline.
     public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
     {
         if (env.IsDevelopment())
